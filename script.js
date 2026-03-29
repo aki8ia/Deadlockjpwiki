@@ -198,4 +198,208 @@ document.addEventListener('DOMContentLoaded', () => {
     modalClose.addEventListener('click', () => modal.classList.remove('active'));
     modal.addEventListener('click', (e) => { if(e.target === modal) modal.classList.remove('active'); });
   }
+
+  // --- Calculator App Logic ---
+  const calcState = {
+    hero: null,
+    items: new Array(12).fill(null)
+  };
+
+  const calcHeroSelect = document.getElementById('calc-hero-select');
+  if(calcHeroSelect) {
+    wikiData.heroes.forEach((h, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = h.translated || h.original;
+      calcHeroSelect.appendChild(opt);
+    });
+
+    calcHeroSelect.addEventListener('change', (e) => {
+      const idx = e.target.value;
+      calcState.hero = idx !== "" ? wikiData.heroes[idx] : null;
+      updateCalcResults();
+    });
+  }
+
+  const slotContainers = {
+    all: document.getElementById('calc-all-slots')
+  };
+
+  function renderCalcSlots() {
+    const container = slotContainers.all;
+    if(!container) return;
+    container.innerHTML = '';
+    
+    for(let i=0; i<12; i++) {
+        const item = calcState.items[i];
+        
+        const slot = document.createElement('div');
+        slot.className = 'calc-slot' + (item ? '' : ' empty');
+        
+        if (item) {
+          if (item.image) {
+            const img = document.createElement('img');
+            img.src = item.image;
+            slot.appendChild(img);
+          } else {
+            slot.textContent = item.translated.substring(0,2);
+          }
+          const rmBtn = document.createElement('button');
+          rmBtn.className = 'remove-btn';
+          rmBtn.innerHTML = '&times;';
+          rmBtn.onclick = (e) => {
+            e.stopPropagation();
+            calcState.items[i] = null;
+            renderCalcSlots();
+            updateCalcResults();
+          };
+          slot.appendChild(rmBtn);
+        }
+        
+        slot.addEventListener('click', () => {
+          showCalcItemPicker(i, 'all');
+        });
+        
+        container.appendChild(slot);
+    }
+  }
+
+  function showCalcItemPicker(globalIdx, category) {
+    let items = [];
+    if (category === 'all') {
+      items = [...wikiData.items.weapon, ...wikiData.items.vitality, ...wikiData.items.spirit];
+    } else {
+      items = wikiData.items[category];
+    }
+    
+    // Filter out already equipped items (Prevent duplicates)
+    items = items.filter(it => !calcState.items.some(equipped => equipped && equipped.id === it.id));
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.style.zIndex = '200';
+    
+    const content = document.createElement('div');
+    content.className = 'modal-content glass-card';
+    content.style.padding = '2rem';
+    content.style.maxHeight = '80vh';
+    content.style.overflowY = 'auto';
+    content.style.maxWidth = '800px';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'modal-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = () => overlay.remove();
+    content.appendChild(closeBtn);
+    
+    const title = document.createElement('h3');
+    title.textContent = `アイテムを選択`;
+    title.style.marginBottom = '1.5rem';
+    content.appendChild(title);
+    
+    const grid = document.createElement('div');
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(180px, 1fr))';
+    grid.style.gap = '1rem';
+    
+    items.forEach(it => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.style.cursor = 'pointer';
+      card.style.padding = '1rem';
+      card.style.minHeight = '120px';
+      
+      const iconHtml = it.image ? `<img src="${it.image}" alt="">` : '?';
+      
+      card.innerHTML = `
+        <div class="item-card-icon" style="width:40px;height:40px;margin-bottom:0.5rem">${iconHtml}</div>
+        <div class="item-card-title" style="font-size:0.9rem">${it.translated || it.original}</div>
+      `;
+      
+      card.onclick = () => {
+        calcState.items[globalIdx] = it;
+        renderCalcSlots();
+        updateCalcResults();
+        overlay.remove();
+      };
+      
+      grid.appendChild(card);
+    });
+    
+    content.appendChild(grid);
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
+    
+    overlay.addEventListener('click', (e) => {
+      if(e.target === overlay) overlay.remove();
+    });
+  }
+
+  function renderStatsSection(containerId, statsObj, labels) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    
+    for (const [key, val] of Object.entries(statsObj)) {
+      if (!labels[key]) continue;
+      const row = document.createElement('div');
+      row.className = 'stat-row';
+      row.innerHTML = `<span class="label">${labels[key]}</span><span class="val">${val}</span>`;
+      container.appendChild(row);
+    }
+  }
+
+  function updateCalcResults() {
+    if(!calcState.hero) {
+       document.getElementById('res-weapon-stats').innerHTML = '<p style="color: #64748b;">ヒーローを選択</p>';
+       document.getElementById('res-vitality-stats').innerHTML = '<p style="color: #64748b;">ヒーローを選択</p>';
+       document.getElementById('res-spirit-stats').innerHTML = '<p style="color: #64748b;">ヒーローを選択</p>';
+       document.getElementById('res-abilities').innerHTML = '<p style="color: #64748b;">ヒーローを選択してください</p>';
+       return;
+    }
+    
+    const res = window.DamageCalculator.calculate(calcState.hero, calcState.items);
+    if(!res) return;
+    
+    const weaponLabels = {
+      dps: 'Weapon DPS', bulletDamage: '弾丸ダメージ', fireRate: '発射速度 (RoF)',
+      clipSize: '装弾数 (Ammo)', reloadTime: 'リロード時間', bulletSpeed: '弾速'
+    };
+    renderStatsSection('res-weapon-stats', res.weapon, weaponLabels);
+
+    const vitalityLabels = {
+      health: '最大体力 (HP)', moveSpeed: '移動速度', sprintSpeed: 'スプリント',
+      stamina: 'スタミナ', bulletResist: '銃弾耐性', spiritResist: 'スピリット耐性', bulletLifesteal: '銃弾吸収(LS)'
+    };
+    renderStatsSection('res-vitality-stats', res.vitality, vitalityLabels);
+
+    const spiritLabels = {
+      spiritPower: 'スピリットパワー', spiritLifesteal: 'スピ吸収(LS)',
+      lightMelee: '近接(弱)', heavyMelee: '近接(強)'
+    };
+    renderStatsSection('res-spirit-stats', res.spirit, spiritLabels);
+    
+    const abList = document.getElementById('res-abilities');
+    abList.innerHTML = '';
+    
+    res.abilities.forEach(ab => {
+      const card = document.createElement('div');
+      card.className = 'ability-card';
+      card.innerHTML = `
+        <div class="ability-card-header">
+          <span class="ability-name">${ab.name}</span>
+          <span class="ability-dmg">${Math.round(ab.total)}</span>
+        </div>
+        <div class="ability-meta">
+          Base: ${ab.base} / Scaling: ${(ab.scaling*100).toFixed(0)}% Spirit
+        </div>
+      `;
+      abList.appendChild(card);
+    });
+  }
+
+  if(slotContainers.all) {
+    renderCalcSlots();
+  }
+
 });

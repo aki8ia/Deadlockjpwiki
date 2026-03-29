@@ -20,6 +20,7 @@
         <a href="#" class="nav-item active" data-target="home">ホーム</a>
         <a href="#" class="nav-item" data-target="heroes">ヒーロー図鑑</a>
         <a href="#" class="nav-item" data-target="items">ウェポンアイテム</a>
+        <a href="#" class="nav-item" data-target="calculator">計算機 (App)</a>
       </nav>
       <div class="sidebar-footer">
         Unofficial Community Wiki
@@ -51,6 +52,56 @@
               <h3>ウェポン & アイテム</h3>
               <p>様々なウェポンアイテムや強化パーツのシナジーを理解し、プレイスタイルを最適化しましょう。</p>
               <button class="nav-button" data-target="items">アイテム一覧へ →</button>
+            </div>
+            <div class="glass-card">
+              <h3>ダメージ＆ステ計算機</h3>
+              <p>ヒーローとアイテムを選択し、リアルタイムでDPSやアビリティダメージの計算結果を確認できます。</p>
+              <button class="nav-button" data-target="calculator">計算機を開く →</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 計算機画面 -->
+        <section id="calculator" class="view-section animate-fade-in" style="display: none;">
+          <h2>ビルド・ダメージ計算機</h2>
+          <div class="calculator-grid">
+            <!-- Left Pane: Controls -->
+            <div class="calc-controls glass-card">
+              <div class="form-group">
+                <label>ヒーロー選択</label>
+                <select id="calc-hero-select" class="calc-select">
+                  <option value="">-- ヒーローを選択 --</option>
+                </select>
+              </div>
+              
+              <div class="form-group" style="margin-top: 1.5rem;">
+                <label>装備アイテム</label>
+                <div class="calc-item-slots" id="calc-all-slots"></div>
+              </div>
+            </div>
+
+            <!-- Right Pane: Results -->
+            <div class="calc-results glass-card">
+              <h3>総合ステータス</h3>
+              <div class="calc-stats-sections">
+                <div class="stats-section">
+                  <h4 style="color:#d97706; margin-bottom: 0.5rem; font-size:1rem;">Weapon</h4>
+                  <div class="stat-list" id="res-weapon-stats"></div>
+                </div>
+                <div class="stats-section">
+                  <h4 style="color:#84cc16; margin-bottom: 0.5rem; font-size:1rem;">Vitality</h4>
+                  <div class="stat-list" id="res-vitality-stats"></div>
+                </div>
+                <div class="stats-section">
+                  <h4 style="color:#a855f7; margin-bottom: 0.5rem; font-size:1rem;">Spirit</h4>
+                  <div class="stat-list" id="res-spirit-stats"></div>
+                </div>
+              </div>
+
+              <h3 style="margin-top: 2rem;">アビリティダメージ</h3>
+              <div id="res-abilities" class="calc-abilities-list">
+                <p style="color: #64748b;">ヒーローを選択してください</p>
+              </div>
             </div>
           </div>
         </section>
@@ -108,6 +159,7 @@
   </div>
 
   <script src="data.js"></script>
+  <script src="calc_engine.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
