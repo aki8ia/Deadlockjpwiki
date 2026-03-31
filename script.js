@@ -5,11 +5,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const sections = document.querySelectorAll('.view-section');
 
   // ナビゲーション処理
+  const sidebar = document.querySelector('.sidebar');
+  const mobileToggle = document.getElementById('mobile-toggle');
+
+  if (mobileToggle && sidebar) {
+    mobileToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+    });
+
+    // 背景クリックで閉じる（スマホのみ）
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768 && 
+          sidebar.classList.contains('active') && 
+          !sidebar.contains(e.target) && 
+          e.target !== mobileToggle && 
+          !mobileToggle.contains(e.target)) {
+        sidebar.classList.remove('active');
+      }
+    });
+  }
+
   navItems.forEach(item => {
     item.addEventListener('click', (e) => {
       e.preventDefault();
       const targetId = item.getAttribute('data-target');
       
+      // スマホならナビ選択時に閉じる
+      if (window.innerWidth <= 768 && sidebar) {
+        sidebar.classList.remove('active');
+      }
+
       document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
       if(item.classList.contains('nav-item')) {
         item.classList.add('active');
@@ -38,25 +63,59 @@ document.addEventListener('DOMContentLoaded', () => {
     
     container.innerHTML = '';
     
-    const createCard = (item) => {
+    const createCard = (item, type = 'items') => {
       const displayName = item.translated || item.original;
-      const subName = item.translated ? item.original : (item.price && item.price !== "Legendary" ? `${item.price} Souls` : (item.price === 'Legendary' ? 'Legendary' : '未翻訳'));
+      const subName = item.translated
+        ? item.original
+        : (item.price && item.price !== 'Legendary'
+            ? `${item.price} Souls`
+            : (item.price === 'Legendary' ? 'Legendary' : '未翻訳'));
+
+      const slug = item.original.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
+      const detailUrl = `${type}/${slug}.html`;
 
       const card = document.createElement('div');
       card.className = 'item-card';
       card.dataset.title = displayName;
       card.dataset.sub = item.original;
 
-      const iconHtml = item.image 
-        ? `<img src="${item.image}" alt="${displayName}">` 
-        : iconText;
+      // Icon (sprite or individual image)
+      const iconEl = document.createElement('div');
+      iconEl.className = 'item-card-icon';
+      iconEl.appendChild(makeItemSprite(item, 56));
+      card.appendChild(iconEl);
 
-      card.innerHTML = `
-        <div class="item-card-icon">${iconHtml}</div>
-        <div class="item-card-title">${displayName}</div>
-        <div class="item-card-sub" style="font-size: 0.8rem">${subName}</div>
-        <div class="item-card-line"></div>
-      `;
+      // Name
+      const titleEl = document.createElement('div');
+      titleEl.className = 'item-card-title';
+      titleEl.textContent = displayName;
+      card.appendChild(titleEl);
+
+      // Sub (EN name / price)
+      const subEl = document.createElement('div');
+      subEl.className = 'item-card-sub';
+      subEl.style.fontSize = '0.8rem';
+      subEl.textContent = subName;
+      card.appendChild(subEl);
+
+      // Detail Link Support (Hidden or visible for SEO)
+      const linkEl = document.createElement('a');
+      linkEl.href = detailUrl;
+      linkEl.className = 'seo-link';
+      linkEl.textContent = '詳細 ↗';
+      linkEl.style.fontSize = '0.7rem';
+      linkEl.style.color = 'var(--accent-primary)';
+      linkEl.style.marginTop = '0.4rem';
+      linkEl.style.display = 'block';
+      // Stop propagation if we want to keep modal behavior
+      linkEl.onclick = (e) => e.stopPropagation();
+      card.appendChild(linkEl);
+
+      // Separator line
+      const lineEl = document.createElement('div');
+      lineEl.className = 'item-card-line';
+      card.appendChild(lineEl);
+
       return card;
     };
 
@@ -85,16 +144,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const gridWrapper = document.createElement('div');
         gridWrapper.className = 'grid-container';
         gridWrapper.style.width = '100%';
-        itemsInPrice.forEach(item => gridWrapper.appendChild(createCard(item)));
+        itemsInPrice.forEach(item => gridWrapper.appendChild(createCard(item, 'items')));
         container.appendChild(gridWrapper);
       });
     } else {
       const gridWrapper = document.createElement('div');
       gridWrapper.className = 'grid-container';
       gridWrapper.style.width = '100%';
-      dataArray.forEach(item => gridWrapper.appendChild(createCard(item)));
+      dataArray.forEach(item => gridWrapper.appendChild(createCard(item, iconText === 'H' ? 'heroes' : 'items')));
       container.appendChild(gridWrapper);
     }
+  }
+
+  // URLパラメータによる初期タブ切り替え
+  const params = new URLSearchParams(window.location.search);
+  const targetTab = params.get('target');
+  if (targetTab) {
+    const targetNav = document.querySelector(`.nav-item[data-target="${targetTab}"]`);
+    if (targetNav) targetNav.click();
   }
 
   // 初期ロード時のレンダリング
@@ -143,7 +210,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if(itemData) {
           document.getElementById('modal-title').textContent = itemData.translated || itemData.original;
           document.getElementById('modal-sub').textContent = itemData.translated ? itemData.original : (itemData.tier ? `Tier ${itemData.tier}` : 'Detailed Info');
-          document.getElementById('modal-icon').innerHTML = itemData.image ? `<img src="${itemData.image}">` : (itemData.category === 'hero' ? 'H' : '★');
+          
+          // アイコン表示（個別画像 or スプライト）
+          const modalIconEl = document.getElementById('modal-icon');
+          modalIconEl.innerHTML = '';
+          if (itemData.image) {
+            const img = document.createElement('img');
+            img.src = itemData.image;
+            img.style.cssText = 'width:56px;height:56px;object-fit:contain;image-rendering:pixelated;';
+            modalIconEl.appendChild(img);
+          } else {
+            modalIconEl.appendChild(makeItemSprite(itemData, 56));
+          }
           
           // 金額の表示切替
           if(itemData.price) {
@@ -184,11 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
               elemEffects.innerHTML = '<li style="color:var(--text-muted); padding-left:0;">└ ステータス効果はまだ登録されていません</li>';
             }
           }
-
-          // 説明テキスト
-          let descText = itemData.description || "";
-          if(itemData.duration) descText += `\n\n🕒 持続時間: ${itemData.duration}`;
-          document.getElementById('modal-desc').textContent = descText || "このパネルに記載したい詳細情報を data.js に入力してください。";
           
           modal.classList.add('active');
         }
@@ -207,6 +280,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const calcHeroSelect = document.getElementById('calc-hero-select');
   if(calcHeroSelect) {
+    // 空オプション
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = '';
+    emptyOpt.textContent = '-- ヒーローを選択 --';
+    calcHeroSelect.appendChild(emptyOpt);
+
     wikiData.heroes.forEach((h, idx) => {
       const opt = document.createElement('option');
       opt.value = idx;
@@ -216,7 +295,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     calcHeroSelect.addEventListener('change', (e) => {
       const idx = e.target.value;
-      calcState.hero = idx !== "" ? wikiData.heroes[idx] : null;
+      calcState.hero = (idx !== '' && idx !== null) ? wikiData.heroes[parseInt(idx)] : null;
+      // スロットはそのまま維持、結果だけ更新
       updateCalcResults();
     });
   }
@@ -237,13 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
         slot.className = 'calc-slot' + (item ? '' : ' empty');
         
         if (item) {
-          if (item.image) {
-            const img = document.createElement('img');
-            img.src = item.image;
-            slot.appendChild(img);
-          } else {
-            slot.textContent = item.translated.substring(0,2);
-          }
+          slot.appendChild(makeItemSprite(item, 46));
           const rmBtn = document.createElement('button');
           rmBtn.className = 'remove-btn';
           rmBtn.innerHTML = '&times;';
@@ -309,12 +383,16 @@ document.addEventListener('DOMContentLoaded', () => {
       card.style.padding = '1rem';
       card.style.minHeight = '120px';
       
-      const iconHtml = it.image ? `<img src="${it.image}" alt="">` : '?';
-      
-      card.innerHTML = `
-        <div class="item-card-icon" style="width:40px;height:40px;margin-bottom:0.5rem">${iconHtml}</div>
-        <div class="item-card-title" style="font-size:0.9rem">${it.translated || it.original}</div>
-      `;
+      const iconWrap = document.createElement('div');
+      iconWrap.className = 'item-card-icon';
+      iconWrap.style.cssText = 'width:56px;height:56px;margin-bottom:0.5rem;overflow:hidden;';
+      iconWrap.appendChild(makeItemSprite(it, 56));
+      card.appendChild(iconWrap);
+      const nameEl = document.createElement('div');
+      nameEl.className = 'item-card-title';
+      nameEl.style.fontSize = '0.85rem';
+      nameEl.textContent = it.translated || it.original;
+      card.appendChild(nameEl);
       
       card.onclick = () => {
         calcState.items[globalIdx] = it;

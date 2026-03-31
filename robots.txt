@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://deadlock-wiki-jp.pages.dev/sitemap.xml

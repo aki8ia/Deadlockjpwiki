@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Deadlock 日本語 Wiki</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;700;900&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
 
   <div class="app-container">
@@ -19,7 +23,7 @@
       <nav class="nav-links">
         <a href="#" class="nav-item active" data-target="home">ホーム</a>
         <a href="#" class="nav-item" data-target="heroes">ヒーロー図鑑</a>
-        <a href="#" class="nav-item" data-target="items">ウェポンアイテム</a>
+        <a href="#" class="nav-item" data-target="items">アイテム図鑑</a>
         <a href="#" class="nav-item" data-target="calculator">計算機 (App)</a>
       </nav>
       <div class="sidebar-footer">
@@ -30,18 +34,23 @@
     <!-- メインコンテンツ -->
     <main class="main-content">
       <header class="topbar">
+        <button class="mobile-toggle" id="mobile-toggle">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
         <div class="topbar-search">
           <input type="text" placeholder="Wiki内を検索...">
         </div>
       </header>
 
       <div class="page-container">
-        
+
         <!-- ホーム画面 -->
         <section id="home" class="view-section active animate-fade-in">
           <h1 class="gradient-text">Deadlock 日本語 Wiki</h1>
           <p class="subtitle">The player-written resource for Deadlock that anyone can edit.</p>
-          
+
           <div class="home-cards">
             <div class="glass-card">
               <h3>ヒーロー図鑑</h3>
@@ -49,7 +58,7 @@
               <button class="nav-button" data-target="heroes">ヒーローを見る →</button>
             </div>
             <div class="glass-card">
-              <h3>ウェポン & アイテム</h3>
+              <h3>アイテム図鑑</h3>
               <p>様々なウェポンアイテムや強化パーツのシナジーを理解し、プレイスタイルを最適化しましょう。</p>
               <button class="nav-button" data-target="items">アイテム一覧へ →</button>
             </div>
@@ -73,7 +82,7 @@
                   <option value="">-- ヒーローを選択 --</option>
                 </select>
               </div>
-              
+
               <div class="form-group" style="margin-top: 1.5rem;">
                 <label>装備アイテム</label>
                 <div class="calc-item-slots" id="calc-all-slots"></div>
@@ -114,8 +123,8 @@
 
         <!-- アイテム画面 -->
         <section id="items" class="view-section animate-fade-in" style="display: none;">
-          <h2>ウェポンアイテム & 強化パーツ</h2>
-          
+          <h2>アイテム図鑑</h2>
+
           <h3 style="margin-top: 2rem; color: #d97706; font-size: 1.4rem;">Weapon (ウェポン)</h3>
           <div id="items-weapon-container"></div>
 
@@ -141,7 +150,7 @@
           <p id="modal-sub">Subname</p>
         </div>
         <div class="modal-price" id="modal-price">
-          <span class="price-icon" style="color: #fbbf24; font-size: 1.2rem;">◎</span> 
+          <span class="price-icon" style="color: #fbbf24; font-size: 1.2rem;">◎</span>
           <span id="modal-price-val">500</span>
         </div>
       </div>
@@ -150,16 +159,14 @@
           <h4>ステータス・効果</h4>
           <ul id="modal-effects"></ul>
         </div>
-        <div class="modal-section" style="margin-top: 1.5rem;">
-          <h4>説明・詳細</h4>
-          <p id="modal-desc" style="color: var(--text-main); font-size: 0.95rem; white-space: pre-wrap;"></p>
-        </div>
       </div>
     </div>
   </div>
 
   <script src="data.js"></script>
+  <script src="sprite_config.js"></script>
   <script src="calc_engine.js"></script>
   <script src="script.js"></script>
 </body>
+
 </html>

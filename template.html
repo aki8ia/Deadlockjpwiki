@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{PAGE_TITLE}} | Deadlock 日本語 Wiki</title>
+  <meta name="description" content="{{PAGE_DESCRIPTION}}">
+  <link rel="stylesheet" href="../style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    .detail-container { padding: 2rem; max-width: 900px; margin: 0 auto; }
+    .hero-item-header { display: flex; gap: 2rem; align-items: center; margin-bottom: 2rem; }
+    .header-icon { width: 120px; height: 120px; border-radius: 12px; background: var(--bg-surface); border: 2px solid var(--accent-primary); overflow: hidden; }
+    .header-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .stat-card { background: var(--bg-surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-subtle); }
+    .back-link { margin-bottom: 2rem; display: inline-block; color: var(--accent-primary); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- サイドバー (静的化) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo-text">DL</span>
+        <span class="logo-sub">Wiki / JA</span>
+      </div>
+      <nav class="nav-links">
+        <a href="../index.html" class="nav-item">ホーム</a>
+        <a href="../index.html?target=heroes" class="nav-item">ヒーロー図鑑</a>
+        <a href="../index.html?target=items" class="nav-item">アイテム図鑑</a>
+        <a href="../index.html?target=calculator" class="nav-item">計算機 (App)</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-container">
+        <a href="../index.html" class="back-link">← ホームへ戻る</a>
+        
+        <div class="detail-container glass-card">
+          <div class="hero-item-header">
+            <div class="header-icon">
+              {{ICON_HTML}}
+            </div>
+            <div>
+              <h1 class="gradient-text" style="font-size: 3rem;">{{NAME}}</h1>
+              <p style="color: var(--text-muted); font-size: 1.2rem;">{{SUB_NAME}}</p>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <h2 style="border-bottom: 2px solid var(--accent-primary); padding-bottom: 0.5rem; margin-bottom: 1.5rem;">ステータス・効果</h2>
+            <div class="stats-grid">
+              {{STATS_HTML}}
+            </div>
+          </div>
+          
+          {{ADDITIONAL_CONTENT}}
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../data.js"></script>
+  <script src="../sprite_config.js"></script>
+  <script>
+    // 簡単なパッシブ処理：URLパラメータがある場合はリダイレクトなどの処理を検討可能
+    // 検索流入時はそのままこの静的HTMLを見せる
+  </script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Sprite Calibration Tool v2</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #111; color: #fff; font-family: monospace; padding: 20px; }
+    h1 { margin-bottom: 20px; font-size: 1.2rem; color: #f0b429; }
+    .layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .controls { width: 360px; background: #1e1e2e; padding: 16px; border-radius: 10px; flex-shrink: 0; }
+    .controls h2 { margin-bottom: 10px; font-size: 0.95rem; color: #a78bfa; }
+    .ctrl-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; font-size: 0.82rem; }
+    .ctrl-row label { color: #94a3b8; width: 160px; }
+    .ctrl-row input[type=range] { width: 100px; }
+    .ctrl-row .val { width: 45px; text-align: right; color: #f0b429; }
+    .preview { background: #1e1e2e; padding: 16px; border-radius: 10px; flex: 1; }
+    .preview h2 { margin-bottom: 10px; font-size: 0.95rem; color: #a78bfa; }
+    .shop-wrap { position: relative; overflow: hidden; display: inline-block; border: 1px solid #334155; }
+    .shop-img { display: block; }
+    .sprite-grid { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .sprite-item { display: inline-block; overflow: hidden; border: 1px solid #334155; position: relative; }
+    .sprite-item span { position: absolute; bottom: 0; left: 0; right: 0; font-size: 7px; background: rgba(0,0,0,0.7); text-align: center; white-space: nowrap; overflow: hidden; padding: 1px 2px; }
+    select, button { background: #2d2d44; color: #fff; border: 1px solid #4a4a6a; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 0.85rem; }
+    button { background: #4338ca; margin-top: 4px; width: 100%; }
+    button.save-btn { background: #16a34a; margin-bottom: 8px; }
+    button:hover { opacity: 0.85; }
+    #output { margin-top: 8px; background: #0d0d1a; border: 1px solid #334155; padding: 8px; border-radius: 6px; font-size: 0.72rem; white-space: pre; overflow-x: auto; max-height: 200px; overflow-y: auto; color: #a3e635; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .tab { padding: 5px 12px; border-radius: 6px; cursor: pointer; border: 1px solid #334155; background: #1e1e2e; font-size: 0.82rem; }
+    .tab.active { border-color: #f0b429; color: #f0b429; }
+    .tier-tab { padding: 5px 10px; border-radius: 6px; cursor: pointer; border: 1px solid #334155; background: #1e1e2e; font-size: 0.82rem; }
+    .tier-tab.active { border-color: #60a5fa; color: #60a5fa; }
+    .saved-badge { display: inline-block; font-size: 0.7rem; color: #4ade80; margin-left: 4px; }
+    select { width: 100%; margin-bottom: 6px; }
+    hr { border-color: #334155; margin: 10px 0; }
+  </style>
+</head>
+<body>
+<h1>🔧 Deadlock Item Sprite Calibration Tool v2</h1>
+<div class="layout">
+
+  <div class="controls">
+    <h2>カテゴリ選択</h2>
+    <div class="tabs" id="cat-tabs">
+      <div class="tab active" id="tab-weapon" onclick="setCategory('weapon')">Weapon</div>
+      <div class="tab" id="tab-vitality" onclick="setCategory('vitality')">Vitality</div>
+      <div class="tab" id="tab-spirit" onclick="setCategory('spirit')">Spirit</div>
+    </div>
+
+    <h2>Tier選択</h2>
+    <div class="tabs" id="tier-tabs">
+      <div class="tier-tab active" id="tier-tab-800" onclick="setTier(800)">T1 (800)</div>
+      <div class="tier-tab" id="tier-tab-1600" onclick="setTier(1600)">T2 (1600)</div>
+      <div class="tier-tab" id="tier-tab-3200" onclick="setTier(3200)">T3 (3200)</div>
+      <div class="tier-tab" id="tier-tab-6400" onclick="setTier(6400)">T4 (6400)</div>
+    </div>
+
+    <hr>
+    <h2>グリッド設定（現在のTier）</h2>
+    <div class="ctrl-row"><label>startX</label><input type="range" id="sx" min="0" max="800" value="121" oninput="update()"><span class="val" id="sx_v">121</span></div>
+    <div class="ctrl-row"><label>startY</label><input type="range" id="sy" min="0" max="1000" value="176" oninput="update()"><span class="val" id="sy_v">176</span></div>
+    <div class="ctrl-row"><label>アイコン幅 (w)</label><input type="range" id="iw" min="30" max="150" value="70" oninput="update()"><span class="val" id="iw_v">70</span></div>
+    <div class="ctrl-row"><label>アイコン高さ (h)</label><input type="range" id="ih" min="30" max="150" value="110" oninput="update()"><span class="val" id="ih_v">110</span></div>
+    <div class="ctrl-row"><label>横間隔 (gapX)</label><input type="range" id="gx" min="-20" max="40" value="3" oninput="update()"><span class="val" id="gx_v">3</span></div>
+    <div class="ctrl-row"><label>縦間隔 (gapY)</label><input type="range" id="gy" min="-20" max="40" value="2" oninput="update()"><span class="val" id="gy_v">2</span></div>
+    <div class="ctrl-row"><label>列数 (cols)</label><input type="range" id="cols" min="1" max="10" value="5" oninput="update()"><span class="val" id="cols_v">5</span></div>
+    <hr>
+    <div class="ctrl-row"><label>画像スケール</label><input type="range" id="scale" min="20" max="100" value="50" oninput="update()"><span class="val" id="scale_v">50</span>%</div>
+    <hr>
+
+    <button class="save-btn" onclick="saveTierConfig()">✅ このTierの設定を保存</button>
+    <button onclick="copyAllOutput()">📋 全設定をJSONコピー</button>
+    <div id="output">/* ここに全Tier設定が出力されます */</div>
+  </div>
+
+  <div class="preview">
+    <h2 id="preview-title">プレビュー — Weapon / Tier 1</h2>
+    <div class="shop-wrap" id="shop-wrap">
+      <img class="shop-img" id="shop-img" src="images/items/Weapon_shop.png">
+      <div style="position:absolute;top:0;left:0;pointer-events:none;" id="grid-overlay"></div>
+    </div>
+    <h2 style="margin-top:14px">切り抜きプレビュー（現在のTierアイテム）</h2>
+    <div class="sprite-grid" id="sprite-grid"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+let currentCategory = 'weapon';
+let currentTier = 800;
+
+// Storage for saved configs: configs[cat][tier] = { startX, startY, w, h, gapX, gapY, cols }
+const configs = {
+  weapon: {},
+  vitality: {},
+  spirit: {}
+};
+
+// Preload Tier1 from user-provided data
+configs.weapon[800] = { startX: 121, startY: 176, w: 70, h: 110, gapX: 3, gapY: 2, cols: 5 };
+configs.vitality[800] = { startX: 121, startY: 176, w: 70, h: 110, gapX: 3, gapY: 2, cols: 5 };
+configs.spirit[800] = { startX: 121, startY: 176, w: 70, h: 110, gapX: 3, gapY: 2, cols: 5 };
+
+const catImages = {
+  weapon: 'images/items/Weapon_shop.png',
+  vitality: 'images/items/Vitality_shop.png',
+  spirit: 'images/items/Spirit_shop.png'
+};
+
+function get(id) { return parseFloat(document.getElementById(id).value); }
+function set(id, v) { document.getElementById(id).value = v; document.getElementById(`${id}_v`).textContent = v; }
+
+function setCategory(cat) {
+  currentCategory = cat;
+  document.querySelectorAll('#cat-tabs .tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${cat}`).classList.add('active');
+  document.getElementById('shop-img').src = catImages[cat];
+  loadCurrentTierConfig();
+  update();
+}
+
+function setTier(tier) {
+  currentTier = tier;
+  document.querySelectorAll('#tier-tabs .tier-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tier-tab-${tier}`).classList.add('active');
+  loadCurrentTierConfig();
+  update();
+}
+
+function loadCurrentTierConfig() {
+  const cfg = configs[currentCategory][currentTier];
+  if (cfg) {
+    set('sx', cfg.startX);
+    set('sy', cfg.startY);
+    set('iw', cfg.w);
+    set('ih', cfg.h);
+    set('gx', cfg.gapX);
+    set('gy', cfg.gapY);
+    set('cols', cfg.cols);
+  }
+}
+
+function saveTierConfig() {
+  configs[currentCategory][currentTier] = {
+    startX: get('sx'), startY: get('sy'),
+    w: get('iw'), h: get('ih'),
+    gapX: get('gx'), gapY: get('gy'),
+    cols: get('cols')
+  };
+  alert(`✅ ${currentCategory} / Tier ${currentTier} の設定を保存しました`);
+  refreshOutput();
+}
+
+function update() {
+  ['sx','sy','iw','ih','gx','gy','cols','scale'].forEach(id => {
+    document.getElementById(`${id}_v`).textContent = get(id);
+  });
+
+  const scale = get('scale') / 100;
+  const img = document.getElementById('shop-img');
+  const wrap = document.getElementById('shop-wrap');
+
+  img.onload = renderOverlay;
+  if (img.complete && img.naturalWidth) renderOverlay();
+
+  function renderOverlay() {
+    img.style.transform = `scale(${scale})`;
+    img.style.transformOrigin = 'top left';
+    wrap.style.width = (img.naturalWidth * scale) + 'px';
+    wrap.style.height = (img.naturalHeight * scale) + 'px';
+
+    const overlay = document.getElementById('grid-overlay');
+    overlay.innerHTML = '';
+    const items = wikiData.items[currentCategory].filter(i => i.price === currentTier);
+    const x0 = get('sx'), y0 = get('sy');
+    const w = get('iw'), h = get('ih');
+    const gx = get('gx'), gy = get('gy');
+    const cols = get('cols');
+
+    items.forEach((item, idx) => {
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      const px = (x0 + col * (w + gx)) * scale;
+      const py = (y0 + row * (h + gy)) * scale;
+      const pw = w * scale;
+      const ph = h * scale;
+
+      const box = document.createElement('div');
+      box.style.cssText = `position:absolute;left:${px}px;top:${py}px;width:${pw}px;height:${ph}px;border:2px solid rgba(240,180,41,0.9);background:rgba(240,180,41,0.05);`;
+      const lbl = document.createElement('span');
+      lbl.style.cssText = 'position:absolute;top:1px;left:2px;font-size:8px;color:#f0b429;font-family:monospace;';
+      lbl.textContent = `${idx+1}`;
+      box.appendChild(lbl);
+      overlay.appendChild(box);
+    });
+
+    // sprite preview
+    const grid = document.getElementById('sprite-grid');
+    grid.innerHTML = '';
+    items.forEach((item, idx) => {
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      const sx2 = x0 + col * (w + gx);
+      const sy2 = y0 + row * (h + gy);
+      const div = document.createElement('div');
+      div.className = 'sprite-item';
+      div.style.cssText = `width:${w}px;height:${h}px;background:url('${catImages[currentCategory]}') -${sx2}px -${sy2}px no-repeat;background-size:${img.naturalWidth}px ${img.naturalHeight}px;flex-shrink:0;`;
+      const lbl = document.createElement('span');
+      lbl.textContent = item.original;
+      div.appendChild(lbl);
+      grid.appendChild(div);
+    });
+
+    document.getElementById('preview-title').textContent = `プレビュー — ${currentCategory} / Tier ${currentTier} (${items.length}個)`;
+  }
+  refreshOutput();
+}
+
+function refreshOutput() {
+  const out = {};
+  ['weapon','vitality','spirit'].forEach(cat => {
+    out[cat] = {};
+    [800,1600,3200,6400].forEach(tier => {
+      if (configs[cat][tier]) out[cat][tier] = configs[cat][tier];
+    });
+  });
+  document.getElementById('output').textContent = JSON.stringify(out, null, 2);
+}
+
+function copyAllOutput() {
+  navigator.clipboard.writeText(document.getElementById('output').textContent);
+  alert('全設定をコピーしました！チャットに貼り付けてください。');
+}
+
+window.onload = () => { loadCurrentTierConfig(); update(); };
+</script>
+</body>
+</html>
